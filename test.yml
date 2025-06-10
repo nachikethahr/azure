@@ -1,0 +1,44 @@
+# azure-pipelines.yml
+# Description: CI pipeline for Maven Java project
+
+trigger:
+  - main  # Change this to your default branch if different
+
+pool:
+  vmImage: 'ubuntu-latest'  # Microsoft-hosted agent image
+
+variables:
+  MAVEN_OPTS: '-Xmx1024m'
+
+steps:
+  # Checkout the code from GitHub
+  - task: Checkout@1
+    displayName: 'Checkout Source Code'
+
+  # Set up Java Development Kit
+  - task: UseJavaVersion@1
+    inputs:
+      versionSpec: '11'  # Change to 17 if you're using JDK 17
+      jdkArchitecture: 'x64'
+    displayName: 'Set up JDK'
+
+  # Run Maven build
+  - task: Maven@3
+    inputs:
+      mavenPomFile: 'pom.xml'
+      goals: 'clean install'
+      publishJUnitResults: true
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      javaHomeOption: 'JDKVersion'
+      jdkVersionOption: '1.11'  # Or '1.17' for JDK 17
+      mavenVersionOption: 'Default'
+      options: '-Xmx1024m'
+    displayName: 'Build and Test with Maven'
+
+  # Publish test results
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFiles: '**/surefire-reports/TEST-*.xml'
+      testRunTitle: 'Maven Unit Tests'
+    condition: succeededOrFailed()
+    displayName: 'Publish Test Results'
